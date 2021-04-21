@@ -1,21 +1,28 @@
-name: Codacy Analysis CLI
+name: mkdocs preview
 
-on: push
+on: pull_request
 
 jobs:
-  codacy-analysis-cli:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          submodules: false
-          fetch-depth: 0
-
-      - name: Run codacy-analysis-cli
-        uses: codacy/codacy-analysis-cli-action@master
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          upload: true
-          max-allowed-issues: 2147483647
+    - uses: actions/checkout@master
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: |
+        echo "$GITHUB_CONTEXT"
+    - uses: actions/github-script@v4
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          const diff_url = context.payload.pull_request
+          # const result = await github.request(diff_url)
+          console.log(diff_url)
+    - uses: actions/github-script@0.3.0
+      if: github.event_name == 'pull_request'
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const { issue: { number: issue_number }, repo: { owner, repo }  } = context;
+          github.issues.createComment({ issue_number, owner, repo, body: 'Hello world ! 👋' });
